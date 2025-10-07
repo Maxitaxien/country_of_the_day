@@ -1,18 +1,11 @@
-# Welcome to React Router!
+# Country of the day
 
-A modern, production-ready template for building full-stack React applications using React Router.
+The aim of this project is to create a site which selects a random country every day and displays some useful trivia about it to the user.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+The project collects data from the Rest Countries API and Wikipedia API to display this information.
 
-## Features
+A globe is used to render the geographical placement of the country.
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
 
 ## Getting Started
 
@@ -77,11 +70,3 @@ Make sure to deploy the output of `npm run build`
 │   ├── client/    # Static assets
 │   └── server/    # Server-side code
 ```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
