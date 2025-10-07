@@ -1,6 +1,7 @@
 import type { Route } from "./+types/home";
 import { useLoaderData } from "react-router";
 import getCountryData from "../scripts/getCountryData";
+import GlobeView from "../components/map";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,13 +17,14 @@ export async function loader() {
 
 export default function Home() {
   const data = useLoaderData<typeof loader>();
-    return (
+  return (
     <div>
       <h1>{data.name.common}</h1>
       <img src={data.flags.png} alt={`${data.name.common} flag`} width={150} />
       <p>Capital: {data.capital?.[0]}</p>
       <p>Population: {data.population.toLocaleString()}</p>
       <p>Region: {data.region}</p>
+      <GlobeView />
     </div>
   );
 }
