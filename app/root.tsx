@@ -44,12 +44,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-  <MantineProvider defaultColorScheme="dark">
-    <div className="min-h-screen bg-[#000011]">
-      <Outlet />;
-    </div>
-  </MantineProvider>
-  )
+    <MantineProvider defaultColorScheme="dark">
+      <div className="min-h-screen bg-[#000011]">
+        <Outlet />;
+      </div>
+    </MantineProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

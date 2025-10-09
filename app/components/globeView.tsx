@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import loadJson from "../scripts/loadJsonFile";
 
-const GlobeView: React.FC<{ width?: string; height?: string}> = ({
+const GlobeView: React.FC<{ width?: string; height?: string }> = ({
   width = "100%",
   height = "100vh",
 }) => {
@@ -34,30 +34,30 @@ const GlobeView: React.FC<{ width?: string; height?: string}> = ({
 
       const Globe = (await import("globe.gl")).default; // dynamic import
       const globe = (Globe as any)()
-        .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
+        .globeImageUrl(
+          "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+        )
         .pointsData(
-          capitalFeatures.map((f: any) => ({
+          [capitalData].map((f: any) => ({
             lat: f.geometry.coordinates[1],
             lng: f.geometry.coordinates[0],
             name: f.properties.city,
-            isSelected: f.properties.city === capitalName,
+            color: "#FFD700",
           }))
         )
-        .pointColor((p: any) => (p.isSelected ? "green" : "yellow"))
+        .pointColor("color")
         .pointAltitude(0.05)
         .pointLabel("name")
         .polygonsData([countryData])
-        .polygonSideColor(() => "rgba(0,150,255,0.2)")
-        .polygonCapColor((feat: any) =>
-          feat.properties.name === countryName ? "red" : "rgba(0,150,255,0.4)"
-        )
+        .polygonSideColor(() => "rgba(200,0,0,0.5)")
+        .polygonCapColor(() => "rgba(255,0,0,0.3)")
         .polygonAltitude(0.02)
         .polygonsTransitionDuration(500);
 
       globe(containerRef.current);
 
       globe.pointOfView({ lat, lng, altitude: 1.5 }, 1000); // zoom to capital
-      
+
       // limit user-interaction to around the country
       const controls = globe.controls();
 
@@ -67,11 +67,10 @@ const GlobeView: React.FC<{ width?: string; height?: string}> = ({
       controls.maxPolarAngle = targetLatRad + Math.PI / 10;
 
       controls.minAzimuthAngle = -Math.PI / 6; // about -30 degrees
-      controls.maxAzimuthAngle =  Math.PI / 6; // about +30 degrees
+      controls.maxAzimuthAngle = Math.PI / 6; // about +30 degrees
 
-      controls.minDistance = 120; 
+      controls.minDistance = 120;
       controls.maxDistance = 400;
-        
     })();
 
     return () => {
@@ -79,7 +78,7 @@ const GlobeView: React.FC<{ width?: string; height?: string}> = ({
     };
   }, []);
 
-  return <div ref={containerRef} style={{ width, height} } />;
+  return <div ref={containerRef} style={{ width, height }} />;
 };
 
 export default GlobeView;
