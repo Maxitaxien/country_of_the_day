@@ -3,15 +3,20 @@ import { Drawer, Button, TextInput, Group } from "@mantine/core";
 import "@mantine/core/styles.css";
 import { useState } from "react";
 import { IconSearch } from "@tabler/icons-react";
+import { useNavigate } from "react-router";
 
-export function CountryMenu() {
+interface CountryMenuProps {
+  countries: string[];
+  selected: string;
+}
+
+export function CountryMenu({ countries, selected }: CountryMenuProps) {
   const [opened, { open, close }] = useDisclosure(false);
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
 
-  // placeholder data - load in from supabase
-  const items = Array.from({ length: 30 }, (_, i) => `Option ${i + 1}`);
-  const filtered = items.filter((item) =>
-    item.toLowerCase().includes(search.toLowerCase())
+  const filtered = countries.filter((country) =>
+    country.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -22,7 +27,7 @@ export function CountryMenu() {
         onClose={close}
         title="Available Countries"
       >
-        <div className="flex flex-col gap-8px">
+        <div className="flex flex-col gap-2">
           <TextInput
             placeholder="Search countries..."
             leftSection={<IconSearch size={16} />}
@@ -31,9 +36,17 @@ export function CountryMenu() {
             mb="md"
           />
           {filtered.length > 0 ? (
-            filtered.map((item) => (
-              <Button key={item} variant="light" fullWidth onClick={close}>
-                {item}
+            filtered.map((country) => (
+              <Button
+                key={country}
+                variant={country === selected ? "filled" : "light"}
+                fullWidth
+                onClick={() => {
+                  close();
+                  navigate(`/?country=${country}`);
+                }}
+              >
+                {country}
               </Button>
             ))
           ) : (
@@ -43,6 +56,7 @@ export function CountryMenu() {
           )}
         </div>
       </Drawer>
+
       <Button variant="default" onClick={open}>
         Choose another country
       </Button>

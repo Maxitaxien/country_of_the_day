@@ -1,27 +1,37 @@
 import type { Route } from "./+types/home";
 import { useLoaderData } from "react-router";
-import getCountryData from "../scripts/getCountryData";
+import { getCountryData, getRandomCountryName} from "../scripts/getCountry";
 import GlobeView from "../components/globeView";
 import { Container } from "@mantine/core";
 import { CountryMenu } from "../components/menu";
 
-export function meta({}: Route.MetaArgs) {
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const selected = url.searchParams.get("country") ?? getRandomCountryName();
+  const countries = ["Norway", "Russia", "Japan"];
+  const countryData = await getCountryData(selected);
+  return { countryName: selected, countryData, countries }; 
+}
+
+export function meta({ data }: Route.MetaArgs) {
+  if (!data) return [{ title: "Country of the day" }];
+  const name =
+    data.countryName ?? data.countryData?.name?.common ?? "Country of the day";
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: `Country of the day: ${name}` },
+    { name: "description", content: `Learn about ${name}` },
   ];
 }
 
-export async function loader() {
-  const data = await getCountryData("Norway");
-  return data;
-}
-
 export default function Home() {
-  const data = useLoaderData<typeof loader>();
+  // destructure exactly what loader returns
+  const { countryData, countries, countryName } =
+    useLoaderData<typeof loader>();
+
   return (
     <div className="relative min-h-screen">
-      <CountryMenu />
+      <CountryMenu countries={countries} selected={countryName} />
       {/* Text box*/}
       <Container className="relative pt-12 flex flex-col items-center">
         <h1 className="text-7xl text-white text-shadow-md">
@@ -29,11 +39,11 @@ export default function Home() {
         </h1>
         <div className="flex items-center gap-6 mt-4">
           <h1 className="text-9xl font-extrabold text-white [text-shadow:_0_0_5px_#00ffff,_0_0_15px_#00ffff,_0_0_30px_#00ffff]">
-            {data.name.common}
+            {countryData.name.common}
           </h1>
           <img
-            src={data.flags.png}
-            alt={`${data.name.common} flag`}
+            src={countryData.flags.png}
+            alt={`${countryData.name.common} flag`}
             width={150}
             className="rounded-lg shadow-lg"
           />
@@ -41,23 +51,32 @@ export default function Home() {
       </Container>
       {/* Info Box */}
       <Container className="flex flex-col items-center">
-        <p>Capital: {data.capital?.[0]}</p>
-        <p>Population: {data.population.toLocaleString()}</p>
-        <p>Region: {data.region}</p>
+        <p>Capital: {countryData.capital?.[0]}</p>
+        <p>Population: {countryData.population.toLocaleString()}</p>
+        <p>Region: {countryData.region}</p>
       </Container>
       {/* Globe  + info*/}
-      <div className="flex flex-col w-full min-h-[100vh]">
-        <div className="flex-grow-[3] w-full relative">
-          <GlobeView width="100%" height="100%" />
+      <div className="flex flex-col lg:flex-row w-full min-h-[100vh]">
+        <div className="lg:flex-[2] h-[50vh] lg:h-auto relative min-w-0">
+          <GlobeView width="100%" height="100%" countryName={countryName}/>
         </div>
-        <div className="flex-grow w-full bg-gray-900 text-white p-8">
-          <h2 className="text-3xl font-bold mb-4">Neighbouring Countries</h2>
-          <ul className="list-disc list-inside">
-            {data.borders?.map((border: any) => (
-              <li key={border}>{border}</li>
-            ))}
-          </ul>
-        </div>
+         {/* Info box beside it */}
+  <div className="flex-[1] flex flex-col justify-center p-8 bg-gray-900">
+    <h2 className="text-3xl font-bold mb-4">Facts about {countryData.name.common}</h2>
+    <p>Capital: {countryData.capital?.[0]}</p>
+    <p>Population: {countryData.population.toLocaleString()}</p>
+    <p>Region: {countryData.region}</p>
+    {countryData.borders && (
+      <>
+        <h3 className="text-2xl font-semibold mt-6 mb-2">Neighbours:</h3>
+        <ul className="list-disc list-inside">
+          {countryData.borders.map((border: any) => (
+            <li key={border}>{border}</li>
+          ))}
+        </ul>
+      </>
+    )}
+  </div>
       </div>
     </div>
   );

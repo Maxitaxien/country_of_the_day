@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import loadJson from "../scripts/loadJsonFile";
 
-const GlobeView: React.FC<{ width?: string; height?: string }> = ({
+const GlobeView: React.FC<{ width?: string; height?: string; countryName: string; }> = ({
   width = "100%",
   height = "100vh",
+  countryName
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -17,8 +18,7 @@ const GlobeView: React.FC<{ width?: string; height?: string }> = ({
       const capitalFeatures = capitals.features;
       const countryFeatures = countries.features;
 
-      const countryName = "Norway"; // TODO: Parameterize, get randomized
-      const capitalName = "Oslo"; // TODO: Lookup in DB based on name
+      const capitalName = "Moscow"; // TODO: Lookup in DB based on name
 
       // TODO: Database lookup
       const countryData = countryFeatures.find(
@@ -58,27 +58,31 @@ const GlobeView: React.FC<{ width?: string; height?: string }> = ({
 
       globe.pointOfView({ lat, lng, altitude: 1.5 }, 1000); // zoom to capital
 
-      // limit user-interaction to around the country
+
+      // limit zoom
       const controls = globe.controls();
-
-      // can't move too far from capital/country
-      const targetLatRad = (90 - lat) * (Math.PI / 180); // convert to radians from pole
-      controls.minPolarAngle = targetLatRad - Math.PI / 10; // allow small tilt up/down
-      controls.maxPolarAngle = targetLatRad + Math.PI / 10;
-
-      controls.minAzimuthAngle = -Math.PI / 6; // about -30 degrees
-      controls.maxAzimuthAngle = Math.PI / 6; // about +30 degrees
-
-      controls.minDistance = 120;
+      controls.minDistance = 130;
       controls.maxDistance = 400;
+
+
+      const handleResize = () => {
+        if (!containerRef.current) return;
+        globe.width(containerRef.current.offsetWidth);
+        globe.height(containerRef.current.offsetHeight);
+      };
+      
+      window.addEventListener("resize", handleResize);
+      handleResize();
+
     })();
 
     return () => {
       if (containerRef.current) containerRef.current.innerHTML = "";
+      window.removeEventListener("resize", () => {});
     };
   }, []);
 
-  return <div ref={containerRef} style={{ width, height }} />;
+  return <div ref={containerRef} style={{ width, height, overflow:"hidden" }} />;
 };
 
 export default GlobeView;
