@@ -1,4 +1,13 @@
-export default async function getCountryData(country: string) {
+// use database for this later
+const countries = ["Norway", "Russia"]
+
+export function getRandomCountryName() {
+  const randomIndex = Math.floor(Math.random() * countries.length);
+  return countries[randomIndex];
+}
+
+// Extend with more data sources
+export async function getCountryData(country: string) {
   const apiUrl = `https://restcountries.com/v3.1/name/${country}`;
 
   try {
