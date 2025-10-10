@@ -80,7 +80,7 @@ const GlobeView: React.FC<{ width?: string; height?: string; countryName: string
       if (containerRef.current) containerRef.current.innerHTML = "";
       window.removeEventListener("resize", () => {});
     };
-  }, []);
+  }, [countryName]);
 
   return <div ref={containerRef} style={{ width, height, overflow:"hidden" }} />;
 };
