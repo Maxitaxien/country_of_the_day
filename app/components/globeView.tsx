@@ -1,88 +1,135 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import loadJson from "../scripts/loadJsonFile";
 
-const GlobeView: React.FC<{ width?: string; height?: string; countryName: string; }> = ({
-  width = "100%",
-  height = "100vh",
-  countryName
-}) => {
+let GlobeLib: any = null; // cache it between renders
+
+async function loadGlobeLib() {
+  if (!GlobeLib) {
+    const mod = await import("globe.gl");
+    GlobeLib = mod.default;
+  }
+  return GlobeLib;
+}
+
+async function createGlobe(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  countryData: any,
+  capitalData: any
+) {
+  const lat = capitalData.geometry.coordinates[1];
+  const lng = capitalData.geometry.coordinates[0];
+
+  const Globe = await loadGlobeLib();
+  const globe = (Globe as any)()
+    .globeImageUrl(
+      "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+    )
+    .pointsData([
+      {
+        lat,
+        lng,
+        name: capitalData.properties.city,
+        color: "#FFD700",
+      },
+    ])
+    .pointColor("color")
+    .pointAltitude(0.05)
+    .pointLabel("name")
+    .polygonsData([countryData])
+    .polygonSideColor(() => "rgba(200,0,0,0.5)")
+    .polygonCapColor(() => "rgba(255,0,0,0.3)")
+    .polygonAltitude(0.02)
+    .polygonsTransitionDuration(500);
+
+  globe(containerRef.current);
+
+  globe.pointOfView({ lat, lng, altitude: 1.5 }, 1000); // zoom to capital
+
+  // limit zoom
+  const controls = globe.controls();
+  controls.minDistance = 130;
+  controls.maxDistance = 400;
+
+  return globe;
+}
+
+const GlobeView: React.FC<{
+  width?: string;
+  height?: string;
+  countryName: string;
+}> = ({ width = "100%", height = "100vh", countryName }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const globeRef = useRef<any>(null);
+  const hasMounted = useRef(false);
+
+  const [capitals, setCapitals] = useState<any[]>([]);
+  const [countries, setCountries] = useState<any[]>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const loadData = async () => {
+      const capitalsJson = await loadJson("/data/capitals.geojson");
+      const countriesJson = await loadJson("/data/countries.geojson");
+      setCapitals(capitalsJson.features);
+      setCountries(countriesJson.features);
+      setDataLoaded(true);
+    };
+    loadData();
+  }, []);
 
-    (async () => {
-      const capitals = await loadJson("/data/capitals.geojson");
-      const countries = await loadJson("/data/countries.geojson");
+  useEffect(() => {
+    if (!dataLoaded || !containerRef.current) return;
 
-      const capitalFeatures = capitals.features;
-      const countryFeatures = countries.features;
+    const capitalName = "Moscow";
+    const countryData = countries.find(
+      (f: any) => f.properties.name === countryName
+    );
+    const capitalData = capitals.find(
+      (f: any) => f.properties.city === capitalName
+    );
 
-      const capitalName = "Moscow"; // TODO: Lookup in DB based on name
+    if (!countryData || !capitalData) return;
 
-      // TODO: Database lookup
-      const countryData = countryFeatures.find(
-        (f: any) => f.properties.name === countryName
-      );
+    if (!hasMounted.current) {
+      hasMounted.current = true;
 
-      const capitalData = capitalFeatures.find(
-        (f: any) => f.properties.city === capitalName
-      );
+      (async () => {
+        const globe = await createGlobe(containerRef, countryData, capitalData);
+        globeRef.current = globe;
 
-      const lat = capitalData.geometry.coordinates[1];
-      const lng = capitalData.geometry.coordinates[0];
+        const handleResize = () => {
+          if (!containerRef.current) return;
+          globe.width(containerRef.current.offsetWidth);
+          globe.height(containerRef.current.offsetHeight);
+        };
 
-      const Globe = (await import("globe.gl")).default; // dynamic import
-      const globe = (Globe as any)()
-        .globeImageUrl(
-          "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-        )
-        .pointsData(
-          [capitalData].map((f: any) => ({
-            lat: f.geometry.coordinates[1],
-            lng: f.geometry.coordinates[0],
-            name: f.properties.city,
+        window.addEventListener("resize", handleResize);
+        handleResize();
+      })();
+    } else {
+      if (globeRef.current) {
+        const lat = capitalData.geometry.coordinates[1];
+        const lng = capitalData.geometry.coordinates[0];
+        globeRef.current.pointOfView({ lat, lng, altitude: 1.5 }, 1000);
+        globeRef.current.pointsData([
+          {
+            lat,
+            lng,
+            name: capitalData.properties.city,
             color: "#FFD700",
-          }))
-        )
-        .pointColor("color")
-        .pointAltitude(0.05)
-        .pointLabel("name")
-        .polygonsData([countryData])
-        .polygonSideColor(() => "rgba(200,0,0,0.5)")
-        .polygonCapColor(() => "rgba(255,0,0,0.3)")
-        .polygonAltitude(0.02)
-        .polygonsTransitionDuration(500);
-
-      globe(containerRef.current);
-
-      globe.pointOfView({ lat, lng, altitude: 1.5 }, 1000); // zoom to capital
-
-
-      // limit zoom
-      const controls = globe.controls();
-      controls.minDistance = 130;
-      controls.maxDistance = 400;
-
-
-      const handleResize = () => {
-        if (!containerRef.current) return;
-        globe.width(containerRef.current.offsetWidth);
-        globe.height(containerRef.current.offsetHeight);
-      };
-      
-      window.addEventListener("resize", handleResize);
-      handleResize();
-
-    })();
-
+          },
+        ]);
+        globeRef.current.polygonsData([countryData]);
+      }
+    }
     return () => {
-      if (containerRef.current) containerRef.current.innerHTML = "";
       window.removeEventListener("resize", () => {});
     };
-  }, [countryName]);
+  }, [countryName, dataLoaded]);
 
-  return <div ref={containerRef} style={{ width, height, overflow:"hidden" }} />;
+  return (
+    <div ref={containerRef} style={{ width, height, overflow: "hidden" }} />
+  );
 };
 
 export default GlobeView;

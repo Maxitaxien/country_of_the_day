@@ -23,6 +23,9 @@ importers:
       '@tabler/icons-react':
         specifier: ^3.35.0
         version: 3.35.0(react@19.2.0)
+      '@types/geojson':
+        specifier: ^7946.0.16
+        version: 7946.0.16
       globe.gl:
         specifier: ^2.44.0
         version: 2.44.0
