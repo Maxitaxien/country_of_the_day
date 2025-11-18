@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import loadJson from "../scripts/loadJsonFile";
 
 let GlobeLib: any = null; // cache it between renders
+const countryToCapital = await loadJson("/data/countryToCapital.json");
 
 async function loadGlobeLib() {
   if (!GlobeLib) {
@@ -80,7 +81,7 @@ const GlobeView: React.FC<{
   useEffect(() => {
     if (!dataLoaded || !containerRef.current) return;
 
-    const capitalName = "Moscow";
+    const capitalName = countryToCapital[countryName];
     const countryData = countries.find(
       (f: any) => f.properties.name === countryName
     );
